@@ -18,6 +18,10 @@ var tinyUrlSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    count: {
+        type: Number,
+        default: 0
+    },
     user: {
         type: ObjectId,
         ref: "User"
