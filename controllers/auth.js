@@ -94,9 +94,24 @@ exports.signout = (req, res) => {
 // JWT verification, it will add `auth` property to the req
 exports.isSignedIn = expressJwt({
     secret: process.env.SECRET,
-    userProperty: "auth",
-    algorithms: ['RS256']
+    algorithms: ['HS256'],
+    userProperty: "auth"
 });
+
+exports.getUserById = (req, res, next) => {
+    if(!req.auth)
+        return next();
+    User.findById(req.auth._id).exec((err, user) => {
+        if (err || !user) {
+            return res.status(400).json({
+                error: "You do not exist Sir !"
+            })
+        }
+
+        req.profile = user;
+        next();
+    });
+}
 
 // To check if we are dealing with same user
 exports.isAuthenticated = (req, res, next) => {

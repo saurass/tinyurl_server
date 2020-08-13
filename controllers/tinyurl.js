@@ -27,7 +27,13 @@ exports.create = (req, res) => {
 
             let tiyurlHash = encode.substring(0, 7) + encode.charAt(19);
 
-            let tinyurl = new TinyUrl({hash: tiyurlHash, link: url});
+            let saveObj = {};
+            saveObj.hash = tiyurlHash;
+            saveObj.link = url;
+            saveObj.user = req.profile._id;
+            saveObj.public = !req.body.public || req.body.public == 1 ? true : false;
+
+            let tinyurl = new TinyUrl(saveObj);
             tinyurl.save();
 
             return res.json({"tinyurl": tiyurlHash});
@@ -51,6 +57,13 @@ exports.getUrl = (req, res) => {
         (err, tinyUrl) => {
             if(err || !tinyUrl) {
                 return ers(res, 404, "No Redirects Found")
+            }
+
+            if(tinyUrl.public == false) {
+                if(req.profile && req.auth && req.profile._id == req.auth._id)
+                    return res.json({"redirect": tinyUrl.link});
+                else
+                    return ers(res, 403, "Access Denied !");
             }
 
             return res.json({"redirect": tinyUrl.link});
