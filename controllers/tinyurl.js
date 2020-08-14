@@ -4,6 +4,8 @@ const { ers } = require("./error");
 const md5 = require("md5");
 const cache = require("./cache");
 
+const queue = require("./queue");
+
 /*
 |------------------------------------------------------
 |   Create Controller
@@ -21,7 +23,8 @@ exports.create = (req, res) => {
     this.getTinyUrlSavedInDB(req.body.url, found => {
         if(!found) {
             let url = req.body.url;
-            let hash = md5(url);
+            let hashableUrl = url + req.profile._id;
+            let hash = md5(hashableUrl);
 
             let buff = new Buffer(hash);
             let encode = buff.toString('base64');
@@ -53,10 +56,9 @@ exports.create = (req, res) => {
 */
 exports.getUrl = (req, res) => {
     let tinyHash = req.params.tinyHash;
-    
     cache.get(tinyHash).then((tinyu) => {
         if(tinyu == null) {
-            console.log("hit DB");
+            // console.log("hit DB")
             TinyUrl.findOne(
                 {"hash": tinyHash},
                 (err, tinyUrl) => {
@@ -68,10 +70,12 @@ exports.getUrl = (req, res) => {
                     cacheObj.link = tinyUrl.link;
                     cacheObj.public = tinyUrl.public;
                     cacheObj.user = tinyUrl.public == false ? tinyUrl.user : null;
+                    cacheObj._id = tinyUrl._id;
         
                     if(tinyUrl.public == false) {
                         if(req.profile && req.auth && req.profile._id == req.auth._id) {
                             cache.set(tinyHash, cacheObj);
+                            queue.push(cacheObj._id);
                             return res.json({"redirect": tinyUrl.link});
                         } else {
                             return ers(res, 403, "Access Denied !");
@@ -79,19 +83,22 @@ exports.getUrl = (req, res) => {
                     }
         
                     cache.set(tinyHash, cacheObj);
+                    queue.push(cacheObj._id);
                     return res.json({"redirect": tinyUrl.link});
                 }
             );
         } else {
-            console.log("cache hits")
+            // console.log("hit cache")
             if(tinyu.public == false) {
                 if(req.profile && req.auth && req.profile._id == req.auth._id) {
+                    queue.push(tinyu._id);
                     return res.json({"redirect": tinyu.link});
                 } else {
                     return ers(res, 403, "Access Denied !");
                 }
             }
 
+            queue.push(tinyu._id);
             return res.json({"redirect": tinyu.link});
         }
     })
