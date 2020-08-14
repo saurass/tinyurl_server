@@ -2,6 +2,7 @@ const TinyUrl = require("../models/tinyurl");
 const { check, validationResult } = require("express-validator");
 const { ers } = require("./error");
 const md5 = require("md5");
+const cache = require("./cache");
 
 /*
 |------------------------------------------------------
@@ -52,23 +53,49 @@ exports.create = (req, res) => {
 */
 exports.getUrl = (req, res) => {
     let tinyHash = req.params.tinyHash;
-    TinyUrl.findOne(
-        {"hash": tinyHash},
-        (err, tinyUrl) => {
-            if(err || !tinyUrl) {
-                return ers(res, 404, "No Redirects Found")
-            }
-
-            if(tinyUrl.public == false) {
-                if(req.profile && req.auth && req.profile._id == req.auth._id)
+    
+    cache.get(tinyHash).then((tinyu) => {
+        if(tinyu == null) {
+            console.log("hit DB");
+            TinyUrl.findOne(
+                {"hash": tinyHash},
+                (err, tinyUrl) => {
+                    if(err || !tinyUrl) {
+                        return ers(res, 404, "No Redirects Found")
+                    }
+        
+                    let cacheObj = {};
+                    cacheObj.link = tinyUrl.link;
+                    cacheObj.public = tinyUrl.public;
+                    cacheObj.user = tinyUrl.public == false ? tinyUrl.user : null;
+        
+                    if(tinyUrl.public == false) {
+                        if(req.profile && req.auth && req.profile._id == req.auth._id) {
+                            cache.set(tinyHash, cacheObj);
+                            return res.json({"redirect": tinyUrl.link});
+                        } else {
+                            return ers(res, 403, "Access Denied !");
+                        }
+                    }
+        
+                    cache.set(tinyHash, cacheObj);
                     return res.json({"redirect": tinyUrl.link});
-                else
+                }
+            );
+        } else {
+            console.log("cache hits")
+            if(tinyu.public == false) {
+                if(req.profile && req.auth && req.profile._id == req.auth._id) {
+                    return res.json({"redirect": tinyu.link});
+                } else {
                     return ers(res, 403, "Access Denied !");
+                }
             }
 
-            return res.json({"redirect": tinyUrl.link});
+            return res.json({"redirect": tinyu.link});
         }
-    );
+    })
+    
 }
 
 // TODO: Add error handling
