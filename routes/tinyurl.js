@@ -11,6 +11,9 @@ router.post("/create", [
     check("url").isLength({ min: 10 }).withMessage('minimum 10 chars required')
 ], authController.isAuthenticated, tinyUrlController.create);
 
+// GET - get all links of a user
+router.get("/userlinks", authController.isAuthenticated, tinyUrlController.getUserLinks);
+
 // GET - get original url
 router.get("/:tinyHash", tinyUrlController.getUrl);
 
