@@ -73,7 +73,7 @@ exports.getUrl = (req, res) => {
                     cacheObj._id = tinyUrl._id;
         
                     if(tinyUrl.public == false) {
-                        if(req.profile && req.auth && req.profile._id == req.auth._id) {
+                        if(req.profile && req.auth && req.profile._id == req.auth._id && req.auth._id == tinyUrl._id) {
                             cache.set(tinyHash, cacheObj);
                             queue.push(cacheObj._id);
                             return res.json({"redirect": tinyUrl.link});
@@ -90,7 +90,7 @@ exports.getUrl = (req, res) => {
         } else {
             // console.log("hit cache")
             if(tinyu.public == false) {
-                if(req.profile && req.auth && req.profile._id == req.auth._id) {
+                if(req.profile && req.auth && req.profile._id == req.auth._id && req.auth._id == tinyu._id) {
                     queue.push(tinyu._id);
                     return res.json({"redirect": tinyu.link});
                 } else {
