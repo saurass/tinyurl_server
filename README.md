@@ -1,6 +1,17 @@
 # TinyURL
 Oftenly we may face situations where handling big links become a difficult task, you might end up destroying the complete link by just missing this one char. So we require a system that can form aliases for our links and we we can use this new small and crisp link instead of bulky links.
 
+# Quick Installation
+The project has 3 major parts -
+* [TinyURL Frontend on ReactJS](https://github.com/saurass/tinyurl_frontend)
+* [TinyURL NodeJS Backend server](https://github.com/saurass/tinyurl_server)
+* [TinyURL ClickTrack Worker](https://github.com/saurass/tinyurl_clicktrack)
+
+Other than this we require mongodb and redis
+
+Here is the link to docker stack deploy files and env files that can help you directly run this project (Please change the env files accordingly). Prior knowledge of Docker-swarm is required.
+[Docker Stack Deploy Files and envs(worker and server)](https://drive.google.com/drive/folders/1o5_Zr7cC7_0CUj2ujrIrsomemKMaQh7F?usp=sharing)
+
 # Objectives
 ## Primary Objectives
 * The system should create very small links for any web link given to it.
